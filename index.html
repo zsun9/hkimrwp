@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link  rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/stylesheet.css">
+    <title>HKIMR Working Papers</title>
+
+  </head>
+
+  <body>
+
+    <div id="navbar"></div>
+
+    <div class="p-1 my-3 bg-primary text-white">
+      <div class="p-3 container">
+        <h1 class="page-header">HKIMR Working Papers</h1>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+
+        <div class="col-sm-3">
+          <form>
+            <div>Authors</div>
+            <div class="list-group m-1 py-2 checkboxes", id="selectauthor"></div>
+            <div>Years</div>
+            <div class="list-group m-1 py-2 checkboxes", id="selectyear"></div>
+          </form>
+        </div>
+
+        <div class="col-sm-9">
+          <div class="list-group py-2", id="displaypaper"></div>
+        </div>
+
+      </div>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+      "use strict";
+
+      $("#navbar").load("common/navbar.html")
+
+      //
+      var authorsSelected = new Set([]);
+      var yearsSelected = new Set([]);
+
+      // load check boxes on the left
+      fetch("./src/checkboxes.json").then(response => response.json()).then(data => {
+
+        function addCheckboxes(selectType) {
+
+          var addString = ``;
+          Object.entries(data[selectType]).forEach(([key, value]) => {
+            addString += `
+              <label class="list-group-item d-flex justify-content-between" onclick="func(this)">
+                <input class="form-check-input me-1" type="checkbox">
+                ${key}
+                <span class="badge bg-primary rounded-pill">${value}</span>
+              </label>
+              `;
+          })
+
+          return addString;
+
+        }
+
+        for (let selectType of ["author", "year"]) {
+          document.getElementById("select" + selectType).innerHTML = addCheckboxes(selectType);
+        }
+
+      })
+
+      // load papers on the right
+      function loadPapers() {
+
+        fetch("./src/papers.json").then(response => response.json()).then(data => {
+
+        
+          var addString = ``;
+          data.forEach(item => {
+
+            let authorsIntersection = new Set(item['authors'].split('|').filter(x => authorsSelected.has(x)));
+
+            let authorsTrue = authorsSelected.size == 0 || authorsIntersection.size >= 1;
+            let yearsTrue = yearsSelected.size == 0 || yearsSelected.has(item['years'])
+
+            if (authorsTrue && yearsTrue) {
+              addString += `
+              <a href="202210.html" class="list-group-item list-group-item-action m-1">
+                  <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">${item['titles']}</h5>
+                    <small>${item['ids']}</small>
+                  </div>
+                  <p class="mb-1">${item['authorsdisplay']}</p>
+              </a>
+              `;
+            }
+          })
+          document.getElementById("displaypaper").innerHTML = addString;
+
+          })
+
+      }
+      loadPapers();
+
+      // add event listener for each checkbox on the left
+      // show only papers meeting the criteria
+
+      // var checkboxes = document.querySelectorAll("input[type=checkbox]");
+      // console.log(checkboxes);
+      // checkboxes.forEach(function(checkbox) {
+      //   checkbox.addEventListener('click', function(){
+      //     console.log('1');
+      //   })
+      // })
+
+      function func(box) {
+        console.log();
+
+        let text = box.innerText.split('\n')[0];
+        let selectType = box.parentElement.id;
+
+        if (selectType == 'selectauthor') {
+          if (box.children[0].checked) {
+            authorsSelected.add(text);
+          } else {
+            authorsSelected.delete(text);
+          }
+        }
+
+        if (selectType == 'selectyear') {
+          if (box.children[0].checked) {
+            yearsSelected.add(parseInt(text));
+          } else {
+            yearsSelected.delete(parseInt(text));
+          }
+        }
+
+        loadPapers();
+
+        }
+
+
+    </script>
+
+  </body>
+
+</html>
